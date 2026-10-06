@@ -10,7 +10,7 @@
 
 <script>
     const SUPABASE_URL = "https://kzakzdjajveggcjfjtse.supabase.co";
-    const SUPABASE_KEY = "YOUR_ANON_KEY";
+    const SUPABASE_KEY = "คีย์เดิมของเรา";
 
     const supabaseClient = window.supabase.createClient(
         SUPABASE_URL,
@@ -406,18 +406,34 @@
             }, 1000);
         }
 async function saveTradeToSupabase() {
-const trade = {
-    pair: document.getElementById('inp-pair').value,
-    timeframe: document.getElementById('inp-tf').value,
-    direction: document.getElementById('inp-dir').value,
-    entry: parseFloat(document.getElementById('inp-entry').value) || null,
-    sl: parseFloat(document.getElementById('inp-sl').value) || null,
-    tp: parseFloat(document.getElementById('inp-tp').value) || null,
-    rr: parseFloat(document.getElementById('inp-rr').value.split(':')[1]) || null,
-    emotion: document.getElementById('inp-emotion').value,
-    followed_rules: document.getElementById('rules').checked,
-    personal_notes: document.getElementById('inp-notes').value
-};
+    const trade = {
+        pair: document.getElementById('inp-pair').value,
+        timeframe: document.getElementById('inp-tf').value,
+        direction: document.getElementById('inp-dir').value,
+        entry: parseFloat(document.getElementById('inp-entry').value) || null,
+        sl: parseFloat(document.getElementById('inp-sl').value) || null,
+        tp: parseFloat(document.getElementById('inp-tp').value) || null,
+        rr: parseFloat(document.getElementById('inp-rr').value.split(':')[1]) || null,
+        emotion: document.getElementById('inp-emotion').value,
+        followed_rules: document.getElementById('rules').checked,
+        personal_notes: document.getElementById('inp-notes').value
+    };
+
+    const { data, error } = await supabaseClient
+        .from('trades')
+        .insert([trade])
+        .select();
+
+    if (error) {
+        console.error('Supabase error:', error);
+        alert('บันทึกไม่สำเร็จ: ' + error.message);
+        return;
+    }
+
+    console.log('Trade saved:', data);
+    alert('บันทึก Trade สำเร็จแล้ว 🎉');
+    closeModal();
+}
         function triggerWeeklyAI() {
             alert('🤖 AI Review Generated!\n\nคำแนะนำประจำสัปดาห์:\n1. ลดการเปิด Trade ในช่วง New York Session\n2. ตั้งเฝ้าระวังข่าว US CPI และรอ 15 นาทีหลังข่าวออก');
         }
