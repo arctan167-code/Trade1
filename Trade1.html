@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Journal + AI Trade Analyzer</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        const SUPABASE_URL = "https://kzakzdjajveggcjfjtse.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6YWt6ZGphanZlZ2djamZqdHNlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMDUxNDQsImV4cCI6MjEwNjg4MTE0NH0.bmUvrTFOldr9yx4-VVcLU99mw6gD1JI1sUnRCAY5j4Y";
+
+const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+    </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+
+    <!-- Navigation Bar -->
+    <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-8">
+            <div class="flex items-center gap-2 text-xl font-bold tracking-tight">
+                <span class="p-1.5 bg-indigo-600 text-white rounded-lg text-lg">⚡</span>
+                <span class="bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">TradeAI Journal</span>
+            </div>
+            <nav class="hidden md:flex gap-1 text-sm font-medium">
+                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="px-3 py-1.5 rounded-lg bg-slate-800 text-indigo-400 font-semibold transition">Dashboard</button>
+                <button onclick="switchTab('setups')" id="tab-setups" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition">Setup Database</button>
+                <button onclick="switchTab('calendar')" id="tab-calendar" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition">Trading Calendar</button>
+            </nav>
+        </div>
+        <button onclick="openModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2 shadow-lg shadow-indigo-600/25">
+            <span>+</span> New Trade
+        </button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
+
+        <!-- TAB 1: DASHBOARD -->
+        <section id="view-dashboard" class="space-y-6">
+            <!-- Metrics Row 1 -->
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                    <span class="text-xs text-slate-400 font-medium">Total Trades</span>
+                    <p class="text-2xl font-bold font-mono mt-1 text-slate-100">27</p>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                    <span class="text-xs text-slate-400 font-medium">Win Rate</span>
+                    <p class="text-2xl font-bold font-mono mt-1 text-emerald-400">63.0%</p>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                    <span class="text-xs text-slate-400 font-medium">Profit Factor</span>
+                    <p class="text-2xl font-bold font-mono mt-1 text-indigo-400">1.72</p>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                    <span class="text-xs text-slate-400 font-medium">Avg RR</span>
+                    <p class="text-2xl font-bold font-mono mt-1 text-slate-100">1:1.8</p>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                    <span class="text-xs text-slate-400 font-medium">Total P/L</span>
+                    <p class="text-2xl font-bold font-mono mt-1 text-emerald-400">+$1,420.50</p>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                    <span class="text-xs text-slate-400 font-medium">Rule Violations</span>
+                    <p class="text-2xl font-bold font-mono mt-1 text-rose-400">4 Times</p>
+                </div>
+            </div>
+
+            <!-- Insights Cards Grid -->
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex items-center justify-between">
+                    <div>
+                        <span class="text-xs text-slate-400 font-medium">🏆 Best Setup</span>
+                        <h4 class="text-lg font-bold text-slate-100 mt-1">BOS + FVG</h4>
+                        <span class="text-xs text-emerald-400 font-mono">Winrate 71% (18 Trades)</span>
+                    </div>
+                    <span class="text-3xl">🔥</span>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex items-center justify-between">
+                    <div>
+                        <span class="text-xs text-slate-400 font-medium">⚠️ Worst Setup</span>
+                        <h4 class="text-lg font-bold text-slate-100 mt-1">Breakout</h4>
+                        <span class="text-xs text-rose-400 font-mono">Winrate 33% (6 Trades)</span>
+                    </div>
+                    <span class="text-3xl">📉</span>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex items-center justify-between">
+                    <div>
+                        <span class="text-xs text-slate-400 font-medium">🌐 Best Session</span>
+                        <h4 class="text-lg font-bold text-slate-100 mt-1">London Session</h4>
+                        <span class="text-xs text-indigo-400 font-mono">Avg RR 1:2.2</span>
+                    </div>
+                    <span class="text-3xl">🏛️</span>
+                </div>
+            </div>
+
+            <!-- AI Weekly Summary Banner -->
+            <div class="bg-gradient-to-r from-indigo-950/60 to-slate-900 border border-indigo-500/30 p-6 rounded-2xl relative overflow-hidden">
+                <div class="flex items-start justify-between relative z-10">
+                    <div class="space-y-2 max-w-2xl">
+                        <div class="flex items-center gap-2 text-indigo-400 font-semibold text-sm">
+                            <span>🤖</span> AI Weekly Performance Insight
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-100">คุณชนะเยอะที่สุดใน London Session ด้วย BOS + FVG</h3>
+                        <p class="text-sm text-slate-300 leading-relaxed">
+                            สัปดาห์นี้คุณทำทั้งหมด 18 Trades (Win Rate 61.1%). ความผิดพลาดหลักคือ 5 จาก 7 Loss เกิดขึ้นในช่วง New York Session และเข้า Trade ก่อน Confirmation หลังข่าว High Impact
+                        </p>
+                    </div>
+                    <button onclick="triggerWeeklyAI()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-4 py-2.5 rounded-xl font-semibold transition shrink-0">
+                        Generate Review
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recent Trades Table -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+                    <h3 class="font-bold text-slate-200">Recent Executed Trades</h3>
+                    <span class="text-xs text-slate-400">Showing last 3 trades</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-300">
+                        <thead class="bg-slate-800/50 text-xs text-slate-400 uppercase font-mono">
+                            <tr>
+                                <th class="p-3.5">Pair/TF</th>
+                                <th class="p-3.5">Direction</th>
+                                <th class="p-3.5">Setup</th>
+                                <th class="p-3.5">RR</th>
+                                <th class="p-3.5">Result</th>
+                                <th class="p-3.5">Emotion</th>
+                                <th class="p-3.5">Rules</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800 font-mono text-xs">
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="p-3.5"><strong class="text-white">XAU/USD</strong> (15M)</td>
+                                <td class="p-3.5 text-rose-400 font-bold">SHORT</td>
+                                <td class="p-3.5">BOS + FVG</td>
+                                <td class="p-3.5">1:2.0</td>
+                                <td class="p-3.5"><span class="bg-emerald-950 text-emerald-400 px-2 py-1 rounded border border-emerald-500/20 font-bold">WIN +$120</span></td>
+                                <td class="p-3.5">😌 Calm</td>
+                                <td class="p-3.5 text-emerald-400">☑ Yes</td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="p-3.5"><strong class="text-white">EUR/USD</strong> (1H)</td>
+                                <td class="p-3.5 text-emerald-400 font-bold">LONG</td>
+                                <td class="p-3.5">CHOCH + OB</td>
+                                <td class="p-3.5">1:1.5</td>
+                                <td class="p-3.5"><span class="bg-rose-950 text-rose-400 px-2 py-1 rounded border border-rose-500/20 font-bold">LOSS -$50</span></td>
+                                <td class="p-3.5">🚀 FOMO</td>
+                                <td class="p-3.5 text-rose-400">☒ Violate</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: SETUP DATABASE -->
+        <section id="view-setups" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-100">Setup Database</h2>
+                    <p class="text-xs text-slate-400">คลังวิเคราะห์ Setup เพื่อหา Edge ที่ทำเงินจริงให้คุณ</p>
+                </div>
+            </div>
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- Setup Card 1 -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                    <div class="flex justify-between items-start">
+                        <h3 class="font-bold text-lg text-indigo-400">BOS + FVG</h3>
+                        <span class="text-xs bg-slate-800 text-slate-300 px-2 py-1 rounded font-mono">15M / London</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 text-xs font-mono">
+                        <div class="bg-slate-800/50 p-2.5 rounded-xl">
+                            <span class="text-slate-400 block text-[10px]">WIN RATE</span>
+                            <span class="text-emerald-400 text-base font-bold">63.0%</span>
+                        </div>
+                        <div class="bg-slate-800/50 p-2.5 rounded-xl">
+                            <span class="text-slate-400 block text-[10px]">PROFIT FACTOR</span>
+                            <span class="text-indigo-400 text-base font-bold">1.72</span>
+                        </div>
+                    </div>
+                    <div class="text-xs text-slate-400 space-y-1 font-mono">
+                        <div class="flex justify-between"><span>Total Trades:</span> <strong class="text-slate-200">27</strong></div>
+                        <div class="flex justify-between"><span>Avg RR:</span> <strong class="text-slate-200">1:1.8</strong></div>
+                    </div>
+                </div>
+                <!-- Setup Card 2 -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                    <div class="flex justify-between items-start">
+                        <h3 class="font-bold text-lg text-indigo-400">CHOCH + OB</h3>
+                        <span class="text-xs bg-slate-800 text-slate-300 px-2 py-1 rounded font-mono">1H / New York</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 text-xs font-mono">
+                        <div class="bg-slate-800/50 p-2.5 rounded-xl">
+                            <span class="text-slate-400 block text-[10px]">WIN RATE</span>
+                            <span class="text-emerald-400 text-base font-bold">58.3%</span>
+                        </div>
+                        <div class="bg-slate-800/50 p-2.5 rounded-xl">
+                            <span class="text-slate-400 block text-[10px]">PROFIT FACTOR</span>
+                            <span class="text-indigo-400 text-base font-bold">1.50</span>
+                        </div>
+                    </div>
+                    <div class="text-xs text-slate-400 space-y-1 font-mono">
+                        <div class="flex justify-between"><span>Total Trades:</span> <strong class="text-slate-200">12</strong></div>
+                        <div class="flex justify-between"><span>Avg RR:</span> <strong class="text-slate-200">1:2.1</strong></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: TRADING CALENDAR -->
+        <section id="view-calendar" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-100">Trading Calendar & Economic News</h2>
+                    <p class="text-xs text-slate-400">จับคู่ Trades ของคุณเข้ากับปฏิทินข่าว Forex Factory</p>
+                </div>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                <div class="grid grid-cols-7 gap-3 text-center text-xs font-bold text-slate-500 mb-4 font-mono">
+                    <div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div><div>SUN</div>
+                </div>
+                <div class="grid grid-cols-7 gap-3 min-h-[350px]">
+                    <div class="bg-slate-800/30 border border-slate-800/80 rounded-xl p-3 flex flex-col justify-between">
+                        <span class="text-xs font-bold text-slate-500 font-mono">6 OCT</span>
+                        <div class="space-y-1.5">
+                            <div class="text-[10px] bg-amber-950/80 text-amber-400 border border-amber-500/30 rounded p-1">🇺🇸 US CPI High Impact</div>
+                            <div class="text-[10px] bg-rose-950/80 text-rose-300 border border-rose-500/30 rounded p-1 font-mono">🔴 XAU/USD -$8.20</div>
+                        </div>
+                        <span class="text-[9px] text-indigo-400 font-mono">#NewsTrade</span>
+                    </div>
+                    <div class="bg-slate-800/30 border border-slate-800/80 rounded-xl p-3 flex flex-col justify-between">
+                        <span class="text-xs font-bold text-slate-500 font-mono">7 OCT</span>
+                        <div class="space-y-1.5">
+                            <div class="text-[10px] bg-emerald-950/80 text-emerald-300 border border-emerald-500/30 rounded p-1 font-mono">🟢 EUR/USD +$24.50</div>
+                        </div>
+                        <span class="text-[9px] text-indigo-400 font-mono">#BOS+FVG</span>
+                    </div>
+                    <div class="bg-slate-800/20 border border-slate-800/40 rounded-xl p-3"><span class="text-xs font-bold text-slate-600 font-mono">8 OCT</span></div>
+                    <div class="bg-slate-800/20 border border-slate-800/40 rounded-xl p-3"><span class="text-xs font-bold text-slate-600 font-mono">9 OCT</span></div>
+                    <div class="bg-slate-800/20 border border-slate-800/40 rounded-xl p-3"><span class="text-xs font-bold text-slate-600 font-mono">10 OCT</span></div>
+                    <div class="bg-slate-800/20 border border-slate-800/40 rounded-xl p-3"><span class="text-xs font-bold text-slate-600 font-mono">11 OCT</span></div>
+                    <div class="bg-slate-800/20 border border-slate-800/40 rounded-xl p-3"><span class="text-xs font-bold text-slate-600 font-mono">12 OCT</span></div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- NEW TRADE MODAL (AI Screenshot Extraction) -->
+    <div id="trade-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 text-slate-100 shadow-2xl space-y-6 my-8">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                <h3 class="text-lg font-bold flex items-center gap-2">
+                    <span>📈</span> Add New Trade & AI Vision Scan
+                </h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white">✕</button>
+            </div>
+
+            <!-- AI File Upload Box -->
+            <div class="p-6 border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-xl bg-slate-800/30 text-center transition cursor-pointer">
+                <input type="file" id="chart-file" class="hidden" onchange="simulateAIVision()" />
+                <label htmlFor="chart-file" class="cursor-pointer flex flex-col items-center gap-2">
+                    <span class="text-3xl">📸</span>
+                    <span id="upload-label" class="text-sm font-semibold text-slate-200">Click to upload Screenshot (TradingView / MT5)</span>
+                    <span class="text-xs text-slate-400">AI Vision will automatically extract Pair, Direction, Entry, SL, TP, and Setup</span>
+                </label>
+            </div>
+
+            <!-- AI Extraction Preview -->
+            <div id="ai-breakdown" class="hidden p-4 bg-indigo-950/40 border border-indigo-500/30 rounded-xl text-xs space-y-2">
+                <div class="flex justify-between font-semibold text-indigo-400">
+                    <span>🤖 AI Vision Analysis Result</span>
+                    <span>Confidence: 92%</span>
+                </div>
+                <p><strong className="text-slate-300">TP Reasoning:</strong> อยู่ใกล้ Liquidity / Previous low zone</p>
+                <p><strong className="text-slate-300">SL Reasoning:</strong> อยู่เหนือ Invalidation point (ถ้าทะลุถือว่า Setup เสีย)</p>
+            </div>
+
+            <form class="space-y-4" onsubmit="event.preventDefault(); closeModal();">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="text-xs text-slate-400">Pair</label>
+                        <input type="text" id="inp-pair" value="XAU/USD" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white font-mono" />
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400">Timeframe</label>
+                        <input type="text" id="inp-tf" value="15M" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white font-mono" />
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400">Direction</label>
+                       <select id="inp-dir" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white">
+                            <option value="SHORT">🔴 SHORT</option>
+                            <option value="LONG">🟢 LONG</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400">RR Ratio</label>
+                       <input type="text" id="inp-rr" value="1:2.0" readonly class="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-sm text-indigo-400 font-mono font-bold" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="text-xs text-slate-400">Entry</label>
+                        <input type="number" id="inp-entry" value="4150" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white font-mono" />
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400">Stop Loss</label>
+                       <input type="number" id="inp-sl" value="4165" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white font-mono" />
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400">Take Profit</label>
+                        <input type="number" id="inp-tp" value="4120" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white font-mono" />
+                    </div>
+                </div>
+
+                <!-- Self Review & Psychology -->
+                <div class="pt-4 border-t border-slate-800 space-y-3">
+                    <h4 class="text-sm font-semibold text-slate-300">🧠 Self Review & Psychology</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs text-slate-400">Emotion State</label>
+                            <select id="inp-emotion" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white">
+                                <option>😌 Calm / Disciplined</option>
+                                <option>😨 Fear</option>
+                                <option>🤑 Greed</option>
+                                <option>🚀 FOMO</option>
+                                <option>🔥 Revenge Trading</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center gap-2 pt-5">
+                            <input type="checkbox" id="rules" checked class="w-4 h-4 accent-indigo-500 rounded" />
+                            <label for="rules" class="text-sm text-slate-300">Followed Rules 🎯</label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400">Personal Notes</label>
+                       <textarea id="inp-notes" rows="2" placeholder="เข้าเทรดเพราะเห็น FVG ตรงกับ 15M Confirmation..." class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white"></textarea>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-800">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm text-slate-300">Cancel</button>
+                    <button type="submit" onclick="event.preventDefault(); saveTradeToSupabase();" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm font-semibold text-white">Save Trade</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript Interactions -->
+    <script>
+        function switchTab(tab) {
+            ['dashboard', 'setups', 'calendar'].forEach(t => {
+                document.getElementById(`view-${t}`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).className = "px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition";
+            });
+            document.getElementById(`view-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).className = "px-3 py-1.5 rounded-lg bg-slate-800 text-indigo-400 font-semibold transition";
+        }
+
+        function openModal() {
+            document.getElementById('trade-modal').classList.remove('hidden');
+            document.getElementById('trade-modal').classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('trade-modal').classList.add('hidden');
+            document.getElementById('trade-modal').classList.remove('flex');
+        }
+
+        function simulateAIVision() {
+            const label = document.getElementById('upload-label');
+            label.innerText = '🤖 AI Processing Chart Image...';
+            setTimeout(() => {
+                label.innerText = '✅ AI Analysis Complete!';
+                document.getElementById('ai-breakdown').classList.remove('hidden');
+            }, 1000);
+        }
+async function saveTradeToSupabase() {
+const trade = {
+    pair: document.getElementById('inp-pair').value,
+    timeframe: document.getElementById('inp-tf').value,
+    direction: document.getElementById('inp-dir').value,
+    entry: parseFloat(document.getElementById('inp-entry').value) || null,
+    sl: parseFloat(document.getElementById('inp-sl').value) || null,
+    tp: parseFloat(document.getElementById('inp-tp').value) || null,
+    rr: parseFloat(document.getElementById('inp-rr').value.split(':')[1]) || null,
+    emotion: document.getElementById('inp-emotion').value,
+    followed_rules: document.getElementById('rules').checked,
+    personal_notes: document.getElementById('inp-notes').value
+};
+        function triggerWeeklyAI() {
+            alert('🤖 AI Review Generated!\n\nคำแนะนำประจำสัปดาห์:\n1. ลดการเปิด Trade ในช่วง New York Session\n2. ตั้งเฝ้าระวังข่าว US CPI และรอ 15 นาทีหลังข่าวออก');
+        }
+    </script>
+</body>
+</html>
